@@ -2,10 +2,24 @@ import { useState } from "react";
 
 function App() {
 
-  const [nitrogen, setNitrogen] = useState("");
-  const [phosphorus, setPhosphorus] = useState("");
-  const [potassium, setPotassium] = useState("");
+  const [formData, setFormData] = useState({
+    N: "",
+    P: "",
+    K: "",
+    temperature: "",
+    humidity: "",
+    ph: "",
+    rainfall: ""
+  });
+
   const [result, setResult] = useState("");
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,11 +29,7 @@ function App() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        nitrogen,
-        phosphorus,
-        potassium
-      })
+      body: JSON.stringify(formData)
     });
 
     const data = await response.json();
@@ -27,35 +37,20 @@ function App() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>🌱 CropMate</h1>
-      <h3>AI Crop Recommendation</h3>
+    <div style={{padding:"40px"}}>
+      <h1>CropMate 🌱</h1>
 
       <form onSubmit={handleSubmit}>
 
-        <input
-          placeholder="Nitrogen"
-          value={nitrogen}
-          onChange={(e) => setNitrogen(e.target.value)}
-        />
+        <input name="N" placeholder="Nitrogen" onChange={handleChange}/>
+        <input name="P" placeholder="Phosphorus" onChange={handleChange}/>
+        <input name="K" placeholder="Potassium" onChange={handleChange}/>
+        <input name="temperature" placeholder="Temperature" onChange={handleChange}/>
+        <input name="humidity" placeholder="Humidity" onChange={handleChange}/>
+        <input name="ph" placeholder="pH" onChange={handleChange}/>
+        <input name="rainfall" placeholder="Rainfall" onChange={handleChange}/>
 
-        <br /><br />
-
-        <input
-          placeholder="Phosphorus"
-          value={phosphorus}
-          onChange={(e) => setPhosphorus(e.target.value)}
-        />
-
-        <br /><br />
-
-        <input
-          placeholder="Potassium"
-          value={potassium}
-          onChange={(e) => setPotassium(e.target.value)}
-        />
-
-        <br /><br />
+        <br/><br/>
 
         <button type="submit">Predict Crop</button>
 
@@ -64,6 +59,7 @@ function App() {
       {result && (
         <h2>Recommended Crop: {result}</h2>
       )}
+
     </div>
   );
 }

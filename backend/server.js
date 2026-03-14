@@ -1,30 +1,31 @@
-import express from "express";
-import cors from "cors";
+const express = require("express");
+const cors = require("cors");
+const { exec } = require("child_process");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("CropMate API Running");
-});
-
-// Crop recommendation route
 app.post("/predict", (req, res) => {
-  const { nitrogen, phosphorus, potassium } = req.body;
 
-  let crop = "Rice";
+  const { N, P, K, temperature, humidity, ph, rainfall } = req.body;
 
-  if (nitrogen > 50 && phosphorus > 40) {
-    crop = "Wheat";
-  } else if (potassium > 50) {
-    crop = "Sugarcane";
-  }
+  const command = `python ml/crop_model.py ${N} ${P} ${K} ${temperature} ${humidity} ${ph} ${rainfall}`;
 
-  res.json({
-    recommended_crop: crop,
+  exec(command, (error, stdout, stderr) => {
+
+    if (error) {
+      console.error(error);
+      return res.status(500).send("Prediction error");
+    }
+
+    res.json({
+      recommended_crop: stdout.trim()
+    });
+
   });
+
 });
 
 app.listen(5000, () => {
