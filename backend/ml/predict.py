@@ -4,9 +4,9 @@ import numpy as np
 import json
 
 # Load trained model
-model = pickle.load(open("crop_model.pkl", "rb"))
+model = pickle.load(open("ml/crop_model.pkl", "rb"))
 
-# Get inputs from command line
+# Read inputs
 N = float(sys.argv[1])
 P = float(sys.argv[2])
 K = float(sys.argv[3])
@@ -20,7 +20,7 @@ data = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
 # Predict crop
 prediction = model.predict(data)[0]
 
-# Get probabilities
+# Get probability for all crops
 probabilities = model.predict_proba(data)[0]
 classes = model.classes_
 
@@ -32,7 +32,7 @@ for i in range(len(classes)):
         "probability": float(probabilities[i])
     })
 
-# Sort top crops
+# Sort by probability
 results = sorted(results, key=lambda x: x["probability"], reverse=True)
 
 top3 = results[:3]
