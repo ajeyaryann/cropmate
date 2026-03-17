@@ -1,54 +1,67 @@
 const express = require("express");
 const cors = require("cors");
-const { exec } = require("child_process");
+const { spawn } = require("child_process");
+const path = require("path");
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Test route
 app.get("/", (req, res) => {
-  res.send("CropMate API running");
+  res.send("CropMate Backend Running ✅");
 });
 
+// Prediction route
 app.post("/predict", (req, res) => {
-
-  const { N, P, K, temperature, humidity, ph, rainfall } = req.body;
-
   console.log("Received Data:", req.body);
+  try {
+    const inputData = req.body;
 
-  const command = `python ml/predict.py ${N} ${P} ${K} ${temperature} ${humidity} ${ph} ${rainfall}`;
+    console.log("Sending to Python:", inputData);
 
-  exec(command, (error, stdout, stderr) => {
+    // Correct path to predict.py
+    const pythonPath = path.join(__dirname, "ml", "predict.py");
 
-    if (error) {
-      console.error("Python Error:", error);
-      return res.status(500).json({ error: "Prediction failed" });
-    }
+    const pythonProcess = spawn("python", [
+      pythonPath,
+      JSON.stringify(inputData),
+    ]);
 
-    try {
+    let result = "";
+    let error = "";
 
-      // extract JSON from python output
-      const jsonStart = stdout.indexOf("{");
-      const jsonString = stdout.slice(jsonStart);
+    pythonProcess.stdout.on("data", (data) => {
+      result += data.toString();
+    });
 
-      const result = JSON.parse(jsonString);
+    pythonProcess.stderr.on("data", (data) => {
+      error += data.toString();
+    });
 
-      console.log("Prediction Result:", result);
+    pythonProcess.on("close", (code) => {
+      if (code !== 0) {
+        console.error("Python Error:", error);
+        return res.status(500).json({
+          error: "Prediction failed",
+          details: error,
+        });
+      }
 
-      res.json(result);
-
-    } catch (err) {
-
-      console.error("Parse Error:", stdout);
-      res.status(500).json({ error: "Invalid ML output" });
-
-    }
-
-  });
-
+      return res.json({
+        prediction: result.trim(),
+      });
+    });
+  } catch (err) {
+    console.error("Server Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-app.listen(5000, () => {
-  console.log("Server running on http://localhost:5000");
+// Start server
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
