@@ -2,6 +2,7 @@ import { useState } from "react";
 import Card from "./Card";
 import Sidebar from "./Sidebar";
 import AnalyticsChart from "./AnalyticsChart";
+import SoilHealthCard from "./SoilHealthCard";
 
 function Dashboard() {
   const [prediction, setPrediction] = useState([]);

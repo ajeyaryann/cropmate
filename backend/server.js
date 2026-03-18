@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const soilHealthRoute = require("./src/routes/soilHealth");
+
+app.use("/soil-health", soilHealthRoute);
+
 // Test route
 app.get("/", (req, res) => {
   res.send("CropMate Backend Running ✅");

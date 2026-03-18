@@ -1,7 +1,9 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Card from "./Card";
-import "./../index.css";
+import SoilHealthCard from "./SoilHealthCard";
+import AnalyticsChart from "./AnalyticsChart";
+import "../styles/Dashboard.css";
 
 function MainDashboard() {
   const [prediction, setPrediction] = useState([]);
@@ -23,6 +25,37 @@ function MainDashboard() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  // 🔥 WEATHER FUNCTION (FINAL WORKING)
+  const fetchWeather = async () => {
+    try {
+      if (!city) {
+        alert("Enter city first");
+        return;
+      }
+
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=91e4a870583e96a4acac8021894d9ae7&units=metric`
+      );
+
+      const data = await res.json();
+
+      if (data.cod !== 200) {
+        alert("City not found");
+        return;
+      }
+
+      // ✅ Auto-fill values
+      setFormData((prev) => ({
+        ...prev,
+        temperature: data.main.temp,
+        humidity: data.main.humidity,
+        rainfall: data.rain ? data.rain["1h"] || 0 : 0,
+      }));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getPrediction = async () => {
@@ -64,44 +97,62 @@ function MainDashboard() {
       <Sidebar />
 
       <div className="main">
-        <h1>🌱 CropMate AI Dashboard</h1>
+        <h1 style={{ marginBottom: "10px" }}>🌱 CropMate AI Dashboard</h1>
 
-        {/* City */}
-        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-          <input
-            type="text"
-            placeholder="Enter City"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          />
-          <button>Fetch Weather</button>
+        {/* 🌍 CITY SECTION */}
+        <div className="card" style={{ marginTop: "10px" }}>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <input
+              type="text"
+              placeholder="Enter City (e.g. Lucknow)"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+            <button onClick={fetchWeather} style={{ minWidth: "150px" }}>
+              🌤 Fetch Weather
+            </button>
+          </div>
         </div>
 
-        {/* Inputs */}
-        <div className="grid">
-          {Object.keys(formData).map((key) => (
-            <div key={key}>
-              <label>{key.toUpperCase()}</label>
+        {/* 🔥 INPUT PANEL */}
+        <div className="card" style={{ marginTop: "20px" }}>
+          <div className="grid">
+            {Object.keys(formData).map((key) => (
               <input
+                key={key}
                 type="number"
                 name={key}
                 value={formData[key]}
                 onChange={handleChange}
+                placeholder={key.toUpperCase()}
               />
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <button
+            style={{
+              marginTop: "20px",
+              width: "100%",
+              fontSize: "16px",
+              padding: "14px",
+            }}
+            onClick={getPrediction}
+          >
+            {loading ? "⏳ Predicting..." : "🚀 Get AI Crop Prediction"}
+          </button>
         </div>
 
-        <button style={{ marginTop: "20px" }} onClick={getPrediction}>
-          {loading ? "Predicting..." : "Get Prediction"}
-        </button>
-
-        {/* Cards */}
-        <div className="grid">
+        {/* 📊 DASHBOARD CARDS */}
+        <div className="grid" style={{ marginTop: "30px" }}>
           <Card title="🌾 Top Crop Predictions">
             {prediction.length > 0 ? (
               prediction.map((crop, i) => (
-                <p key={i}>{i + 1}. {crop}</p>
+                <p key={i}>
+                  <span style={{ color: "#38bdf8", fontWeight: "bold" }}>
+                    {i + 1}.
+                  </span>{" "}
+                  {crop}
+                </p>
               ))
             ) : (
               <p>No prediction yet</p>
@@ -114,7 +165,7 @@ function MainDashboard() {
             <p>Rainfall: {formData.rainfall || "--"} mm</p>
           </Card>
 
-          <Card title="🌱 Soil Health">
+          <Card title="🌱 Soil Data">
             <p>N: {formData.N || "--"}</p>
             <p>P: {formData.P || "--"}</p>
             <p>K: {formData.K || "--"}</p>
@@ -122,7 +173,19 @@ function MainDashboard() {
 
           <Card title="📊 AI Insights">
             <p>Best Crop: {prediction[0] || "--"}</p>
-            <p>Confidence: High</p>
+            <p style={{ color: "#22c55e" }}>Confidence: High</p>
+          </Card>
+        </div>
+
+        {/* 🧪 SOIL HEALTH ANALYZER */}
+        <div style={{ marginTop: "30px" }}>
+          <SoilHealthCard formData={formData} />
+        </div>
+
+        {/* 📈 ANALYTICS */}
+        <div style={{ marginTop: "30px" }}>
+          <Card title="📊 Crop Yield Trend">
+            <AnalyticsChart />
           </Card>
         </div>
       </div>
