@@ -13,6 +13,9 @@ function MainDashboard() {
   // 🌾 Fertilizer State
   const [fertilizerData, setFertilizerData] = useState(null);
 
+  // 🧠 Explanation State
+  const [explanation, setExplanation] = useState("");
+
   const [formData, setFormData] = useState({
     N: "",
     P: "",
@@ -49,7 +52,6 @@ function MainDashboard() {
         return;
       }
 
-      // Auto-fill weather
       setFormData((prev) => ({
         ...prev,
         temperature: data.main.temp,
@@ -84,6 +86,36 @@ function MainDashboard() {
     }
   };
 
+  // 🧠 Generate Explanation
+  const generateExplanation = (bestCrop) => {
+
+    let reasons = [];
+
+    if (Number(formData.N) > 40)
+      reasons.push("Nitrogen level is suitable");
+
+    if (Number(formData.temperature) > 20)
+      reasons.push("Temperature matches crop needs");
+
+    if (
+      Number(formData.ph) >= 6 &&
+      Number(formData.ph) <= 7.5
+    )
+      reasons.push("Soil pH is optimal");
+
+    if (Number(formData.rainfall) > 50)
+      reasons.push("Rainfall supports healthy growth");
+
+    if (reasons.length === 0)
+      reasons.push("Soil conditions match crop requirements");
+
+    const explanationText =
+      `${bestCrop} is recommended because:\n• ` +
+      reasons.join("\n• ");
+
+    setExplanation(explanationText);
+  };
+
   // 🌱 Crop Prediction Function
   const getPrediction = async () => {
     try {
@@ -115,10 +147,14 @@ function MainDashboard() {
 
       setPrediction(crops);
 
-      // 🌾 Call Fertilizer API after prediction
+      // 🧠 Generate explanation
+      generateExplanation(crops[0]);
+
+      // 🌾 Fetch Fertilizer
       await getFertilizerRecommendation();
 
       setLoading(false);
+
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -134,7 +170,7 @@ function MainDashboard() {
           🌱 CropMate AI Dashboard
         </h1>
 
-        {/* 🌍 CITY SECTION */}
+        {/* CITY SECTION */}
         <div className="card" style={{ marginTop: "10px" }}>
           <div style={{ display: "flex", gap: "10px" }}>
             <input
@@ -153,7 +189,7 @@ function MainDashboard() {
           </div>
         </div>
 
-        {/* 🔥 INPUT PANEL */}
+        {/* INPUT PANEL */}
         <div className="card" style={{ marginTop: "20px" }}>
           <div className="grid">
             {Object.keys(formData).map((key) => (
@@ -183,10 +219,9 @@ function MainDashboard() {
           </button>
         </div>
 
-        {/* 📊 DASHBOARD CARDS */}
+        {/* DASHBOARD CARDS */}
         <div className="grid" style={{ marginTop: "30px" }}>
           
-          {/* 🌾 Crop Predictions */}
           <Card title="🌾 Top Crop Predictions">
             {prediction.length > 0 ? (
               prediction.map((crop, i) => (
@@ -207,27 +242,18 @@ function MainDashboard() {
             )}
           </Card>
 
-          {/* 🌤 Weather */}
           <Card title="🌤 Weather Insights">
-            <p>
-              Temp: {formData.temperature || "--"}°C
-            </p>
-            <p>
-              Humidity: {formData.humidity || "--"}%
-            </p>
-            <p>
-              Rainfall: {formData.rainfall || "--"} mm
-            </p>
+            <p>Temp: {formData.temperature || "--"}°C</p>
+            <p>Humidity: {formData.humidity || "--"}%</p>
+            <p>Rainfall: {formData.rainfall || "--"} mm</p>
           </Card>
 
-          {/* 🌱 Soil */}
           <Card title="🌱 Soil Data">
             <p>N: {formData.N || "--"}</p>
             <p>P: {formData.P || "--"}</p>
             <p>K: {formData.K || "--"}</p>
           </Card>
 
-          {/* 📊 AI Insights */}
           <Card title="📊 AI Insights">
             <p>Best Crop: {prediction[0] || "--"}</p>
             <p style={{ color: "#22c55e" }}>
@@ -235,14 +261,11 @@ function MainDashboard() {
             </p>
           </Card>
 
-          {/* 🌾 NEW Fertilizer Card */}
           <Card title="🌾 Fertilizer Recommendation">
             {fertilizerData ? (
               <>
                 <p>
-                  <strong
-                    style={{ color: "#38bdf8" }}
-                  >
+                  <strong style={{ color: "#38bdf8" }}>
                     Recommended:
                   </strong>{" "}
                   {fertilizerData.fertilizer}
@@ -263,16 +286,45 @@ function MainDashboard() {
 
         </div>
 
-        {/* 🧪 SOIL HEALTH */}
+        {/* SOIL HEALTH */}
         <div style={{ marginTop: "30px" }}>
           <SoilHealthCard formData={formData} />
         </div>
 
-        {/* 📈 ANALYTICS */}
-        <div style={{ marginTop: "30px" }}>
-          <Card title="📊 Crop Yield Trend">
-            <AnalyticsChart />
+        {/* 📊 ANALYTICS + EXPLANATION (HALF-HALF) */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+            marginTop: "30px",
+          }}
+        >
+
+          {/* Analytics */}
+          <Card title="📊 Crop Prediction Analytics">
+            <AnalyticsChart prediction={prediction} />
           </Card>
+
+          {/* Explanation */}
+          <Card title="🧠 Why This Crop?">
+
+            {explanation ? (
+
+              <div style={{ whiteSpace: "pre-line" }}>
+                <p style={{ color: "#94a3b8" }}>
+                  {explanation}
+                </p>
+              </div>
+
+            ) : (
+
+              <p>No explanation available yet</p>
+
+            )}
+
+          </Card>
+
         </div>
 
       </div>
