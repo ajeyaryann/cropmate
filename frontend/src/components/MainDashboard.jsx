@@ -10,6 +10,9 @@ function MainDashboard() {
   const [loading, setLoading] = useState(false);
   const [city, setCity] = useState("");
 
+  // 🌾 Fertilizer State
+  const [fertilizerData, setFertilizerData] = useState(null);
+
   const [formData, setFormData] = useState({
     N: "",
     P: "",
@@ -27,7 +30,7 @@ function MainDashboard() {
     });
   };
 
-  // 🔥 WEATHER FUNCTION (FINAL WORKING)
+  // 🌤 WEATHER FUNCTION
   const fetchWeather = async () => {
     try {
       if (!city) {
@@ -46,7 +49,7 @@ function MainDashboard() {
         return;
       }
 
-      // ✅ Auto-fill values
+      // Auto-fill weather
       setFormData((prev) => ({
         ...prev,
         temperature: data.main.temp,
@@ -58,13 +61,39 @@ function MainDashboard() {
     }
   };
 
+  // 🌾 Fertilizer API Function
+  const getFertilizerRecommendation = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/fertilizer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nitrogen: Number(formData.N),
+          phosphorus: Number(formData.P),
+          potassium: Number(formData.K),
+        }),
+      });
+
+      const data = await res.json();
+
+      setFertilizerData(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 🌱 Crop Prediction Function
   const getPrediction = async () => {
     try {
       setLoading(true);
 
       const res = await fetch("http://localhost:5000/predict", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           ...formData,
           N: Number(formData.N),
@@ -85,6 +114,10 @@ function MainDashboard() {
           : [];
 
       setPrediction(crops);
+
+      // 🌾 Call Fertilizer API after prediction
+      await getFertilizerRecommendation();
+
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -97,7 +130,9 @@ function MainDashboard() {
       <Sidebar />
 
       <div className="main">
-        <h1 style={{ marginBottom: "10px" }}>🌱 CropMate AI Dashboard</h1>
+        <h1 style={{ marginBottom: "10px" }}>
+          🌱 CropMate AI Dashboard
+        </h1>
 
         {/* 🌍 CITY SECTION */}
         <div className="card" style={{ marginTop: "10px" }}>
@@ -108,7 +143,11 @@ function MainDashboard() {
               value={city}
               onChange={(e) => setCity(e.target.value)}
             />
-            <button onClick={fetchWeather} style={{ minWidth: "150px" }}>
+
+            <button
+              onClick={fetchWeather}
+              style={{ minWidth: "150px" }}
+            >
               🌤 Fetch Weather
             </button>
           </div>
@@ -138,17 +177,26 @@ function MainDashboard() {
             }}
             onClick={getPrediction}
           >
-            {loading ? "⏳ Predicting..." : "🚀 Get AI Crop Prediction"}
+            {loading
+              ? "⏳ Predicting..."
+              : "🚀 Get AI Crop Prediction"}
           </button>
         </div>
 
         {/* 📊 DASHBOARD CARDS */}
         <div className="grid" style={{ marginTop: "30px" }}>
+          
+          {/* 🌾 Crop Predictions */}
           <Card title="🌾 Top Crop Predictions">
             {prediction.length > 0 ? (
               prediction.map((crop, i) => (
                 <p key={i}>
-                  <span style={{ color: "#38bdf8", fontWeight: "bold" }}>
+                  <span
+                    style={{
+                      color: "#38bdf8",
+                      fontWeight: "bold",
+                    }}
+                  >
                     {i + 1}.
                   </span>{" "}
                   {crop}
@@ -159,25 +207,63 @@ function MainDashboard() {
             )}
           </Card>
 
+          {/* 🌤 Weather */}
           <Card title="🌤 Weather Insights">
-            <p>Temp: {formData.temperature || "--"}°C</p>
-            <p>Humidity: {formData.humidity || "--"}%</p>
-            <p>Rainfall: {formData.rainfall || "--"} mm</p>
+            <p>
+              Temp: {formData.temperature || "--"}°C
+            </p>
+            <p>
+              Humidity: {formData.humidity || "--"}%
+            </p>
+            <p>
+              Rainfall: {formData.rainfall || "--"} mm
+            </p>
           </Card>
 
+          {/* 🌱 Soil */}
           <Card title="🌱 Soil Data">
             <p>N: {formData.N || "--"}</p>
             <p>P: {formData.P || "--"}</p>
             <p>K: {formData.K || "--"}</p>
           </Card>
 
+          {/* 📊 AI Insights */}
           <Card title="📊 AI Insights">
             <p>Best Crop: {prediction[0] || "--"}</p>
-            <p style={{ color: "#22c55e" }}>Confidence: High</p>
+            <p style={{ color: "#22c55e" }}>
+              Confidence: High
+            </p>
           </Card>
+
+          {/* 🌾 NEW Fertilizer Card */}
+          <Card title="🌾 Fertilizer Recommendation">
+            {fertilizerData ? (
+              <>
+                <p>
+                  <strong
+                    style={{ color: "#38bdf8" }}
+                  >
+                    Recommended:
+                  </strong>{" "}
+                  {fertilizerData.fertilizer}
+                </p>
+
+                <p style={{ marginTop: "10px" }}>
+                  <strong>Reason:</strong>
+                </p>
+
+                <p style={{ color: "#94a3b8" }}>
+                  {fertilizerData.reason}
+                </p>
+              </>
+            ) : (
+              <p>No fertilizer suggestion yet</p>
+            )}
+          </Card>
+
         </div>
 
-        {/* 🧪 SOIL HEALTH ANALYZER */}
+        {/* 🧪 SOIL HEALTH */}
         <div style={{ marginTop: "30px" }}>
           <SoilHealthCard formData={formData} />
         </div>
@@ -188,6 +274,7 @@ function MainDashboard() {
             <AnalyticsChart />
           </Card>
         </div>
+
       </div>
     </div>
   );
