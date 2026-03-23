@@ -1,9 +1,24 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
   const [active, setActive] = useState("Dashboard");
 
+  const navigate = useNavigate();
+
   const menu = ["Dashboard", "Crops", "Weather", "Soil", "AI Advisor"];
+
+  const handleClick = (item) => {
+    setActive(item);
+
+    if (item === "Dashboard") {
+      navigate("/");
+    }
+
+    if (item === "AI Advisor") {
+      navigate("/ai-advisor");
+    }
+  };
 
   return (
     <div className="sidebar">
@@ -14,7 +29,7 @@ function Sidebar() {
           <li
             key={item}
             className={active === item ? "active" : ""}
-            onClick={() => setActive(item)}
+            onClick={() => handleClick(item)}
           >
             {item}
           </li>

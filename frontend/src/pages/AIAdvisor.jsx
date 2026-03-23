@@ -1,66 +1,113 @@
-import Sidebar from "../components/Sidebar";
-import "../styles/Dashboard.css";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
-function AIAdvisor() {
+import VoiceAssistant from "../components/VoiceAssistant";
+import ChatBox from "../components/ChatBox";
+
+import "../styles/AIAdvisor.css";
+
+const AIAdvisor = () => {
+
+  const navigate = useNavigate();
+
   return (
-    <div className="layout">
-      <Sidebar />
 
-      <div className="main">
-        <h1>🎤 AI Farming Advisor</h1>
+    <div className="advisor-container">
 
-        {/* Voice Section */}
-        <div
-          className="card"
-          style={{ marginTop: "20px" }}
+      {/* Header */}
+
+      <div className="header-section">
+
+        <button
+          className="back-btn"
+          onClick={() => navigate("/")}
         >
-          <h2>🎤 Voice Assistant</h2>
 
-          <button
-            style={{
-              marginTop: "15px",
-              padding: "12px",
-              fontSize: "16px",
-              width: "200px",
-            }}
-          >
-            🎙 Start Speaking
-          </button>
+          🔙 Back to Dashboard
+
+        </button>
+
+        <h1 className="title">
+
+          🤖 CropMate AI Advisor
+
+        </h1>
+
+        <p className="subtitle">
+
+          Ask farming questions using voice
+          or chat in multiple Indian languages.
+
+        </p>
+
+      </div>
+
+      {/* Voice + Chat Grid */}
+
+      <div className="advisor-grid">
+
+        <div className="voice-card">
+
+          <VoiceAssistant />
+
         </div>
 
-        {/* Chat Section */}
-        <div
-          className="card"
-          style={{ marginTop: "20px" }}
-        >
-          <h2>💬 Chat With AI</h2>
+        <div className="chat-card">
 
-          <input
-            type="text"
-            placeholder="Type in Hindi or English..."
-            style={{
-              width: "100%",
-              marginTop: "15px",
-            }}
-          />
+          <ChatBox />
 
-          <button
-            style={{
-              marginTop: "15px",
-              padding: "10px",
-            }}
-          >
-            Send
-          </button>
-
-          <p style={{ marginTop: "15px" }}>
-            AI Response will appear here...
-          </p>
         </div>
 
       </div>
+
+      {/* Quick Tools */}
+
+      <div className="quick-tools">
+
+        <h3>🌾 Quick Farming Help</h3>
+
+        <div className="tool-grid">
+
+          <div className="tool-card">
+            🌱 Crop Advice
+            <p>
+              Ask about best crops,
+              diseases and growth.
+            </p>
+          </div>
+
+          <div className="tool-card">
+            💧 Irrigation Tips
+            <p>
+              Get watering suggestions
+              based on crop needs.
+            </p>
+          </div>
+
+          <div className="tool-card">
+            🧪 Fertilizer Help
+            <p>
+              Learn correct fertilizer
+              usage and timing.
+            </p>
+          </div>
+
+          <div className="tool-card">
+            🌦️ Weather Questions
+            <p>
+              Understand weather impact
+              on crop decisions.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
+
   );
-}
+
+};
 
 export default AIAdvisor;
