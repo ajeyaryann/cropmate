@@ -6,7 +6,14 @@ function Sidebar() {
 
   const navigate = useNavigate();
 
-  const menu = ["Dashboard", "Crops", "Weather", "Soil", "AI Advisor"];
+  // Updated menu (Crops → Farming Methods)
+  const menu = [
+    "Dashboard",
+    "Farming Methods",
+    "Weather",
+    "Soil",
+    "AI Advisor"
+  ];
 
   const handleClick = (item) => {
     setActive(item);
@@ -17,6 +24,10 @@ function Sidebar() {
 
     if (item === "AI Advisor") {
       navigate("/ai-advisor");
+    }
+
+    if (item === "Farming Methods") {
+      navigate("/farming-methods");
     }
   };
 
