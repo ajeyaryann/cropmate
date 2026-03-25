@@ -1,7 +1,13 @@
+// ================================
+// CropMate Backend Server
+// Optimized Mistral AI + ML
+// ================================
+
 const express = require("express");
 const cors = require("cors");
-const { spawn } = require("child_process");
 const path = require("path");
+const axios = require("axios");
+const { spawn } = require("child_process");
 
 const app = express();
 
@@ -13,25 +19,42 @@ app.use(cors());
 app.use(express.json());
 
 // ================================
-// Soil Health Route
+// Soil Health Route (Safe Load)
 // ================================
 
-const soilHealthRoute = require("./src/routes/soilHealth");
+try {
 
-app.use("/soil-health", soilHealthRoute);
+  const soilHealthRoute =
+    require("./src/routes/soilHealth");
+
+  app.use(
+    "/soil-health",
+    soilHealthRoute
+  );
+
+}
+catch (err) {
+
+  console.log(
+    "Soil health route not found"
+  );
+
+}
 
 // ================================
-// Test Route
+// Root Test Route
 // ================================
 
 app.get("/", (req, res) => {
 
-  res.send("CropMate Backend Running ✅");
+  res.send(
+    "CropMate Backend Running ✅"
+  );
 
 });
 
 // ================================
-// 🤖 AI Advisor Chat Route
+// 🤖 AI CHAT ROUTE (Optimized)
 // ================================
 
 app.post("/api/chat", async (req, res) => {
@@ -40,59 +63,93 @@ app.post("/api/chat", async (req, res) => {
 
     const { message } = req.body;
 
-    console.log("AI Chat Message:", message);
+    if (!message) {
 
-    let reply = "";
+      return res.json({
 
-    const text = message.toLowerCase();
+        reply:
+          "Please type a message."
 
-    if (text.includes("wheat")) {
-
-      reply =
-        "For wheat crops, ensure proper irrigation and apply nitrogen fertilizer during early growth.";
+      });
 
     }
 
-    else if (text.includes("dry")) {
+    console.log(
+      "AI Message:",
+      message
+    );
 
-      reply =
-        "Your crop may be drying due to lack of water. Increase irrigation frequency.";
+    // Short optimized prompt
 
-    }
+    const prompt = `
+You are a farming expert.
 
-    else if (text.includes("rice")) {
+Give short practical advice.
 
-      reply =
-        "Rice crops require standing water during early growth stages.";
+Question:
+${message}
+`;
 
-    }
+    // Call Ollama API
 
-    else if (text.includes("fertilizer")) {
+    const response =
+      await axios.post(
 
-      reply =
-        "You can use nitrogen-based fertilizer during early plant growth.";
+        "http://localhost:11434/api/generate",
 
-    }
+        {
 
-    else {
+          model: "mistral",
 
-      reply =
-        "I understand your question. Please provide more crop details for better advice.";
+          prompt: prompt,
 
-    }
+          stream: false,
+
+          options: {
+
+            num_predict: 200,
+            temperature: 0.7
+
+          }
+
+        },
+
+        {
+
+          timeout: 120000
+
+        }
+
+      );
+
+    const aiReply =
+      response.data.response;
+
+    console.log(
+      "AI Response Generated"
+    );
 
     res.json({
-      reply: reply
+
+      reply:
+        aiReply
+
     });
 
   }
 
   catch (error) {
 
-    console.error("Chat Error:", error);
+    console.error(
+      "AI Chat Error:",
+      error.message
+    );
 
     res.status(500).json({
-      reply: "Server error occurred."
+
+      reply:
+        "AI service temporarily unavailable."
+
     });
 
   }
@@ -105,67 +162,112 @@ app.post("/api/chat", async (req, res) => {
 
 app.post("/predict", (req, res) => {
 
-  console.log("Received Data:", req.body);
-
   try {
 
-    const inputData = req.body;
+    const inputData =
+      req.body;
 
-    console.log("Sending to Python:", inputData);
+    const pythonPath =
+      path.join(
 
-    const pythonPath = path.join(
-      __dirname,
-      "ml",
-      "predict.py"
-    );
+        __dirname,
+        "ml",
+        "predict.py"
 
-    const pythonProcess = spawn("python", [
-      pythonPath,
-      JSON.stringify(inputData),
-    ]);
+      );
+
+    const pythonProcess =
+      spawn(
+
+        "python",
+
+        [
+
+          pythonPath,
+
+          JSON.stringify(
+            inputData
+          )
+
+        ]
+
+      );
 
     let result = "";
     let error = "";
 
-    pythonProcess.stdout.on("data", (data) => {
+    pythonProcess.stdout.on(
+      "data",
 
-      result += data.toString();
+      (data) => {
 
-    });
+        result +=
+          data.toString();
 
-    pythonProcess.stderr.on("data", (data) => {
+      }
 
-      error += data.toString();
+    );
 
-    });
+    pythonProcess.stderr.on(
+      "data",
 
-    pythonProcess.on("close", (code) => {
+      (data) => {
 
-      if (code !== 0) {
+        error +=
+          data.toString();
 
-        console.error("Python Error:", error);
+      }
 
-        return res.status(500).json({
-          error: "Prediction failed",
-          details: error,
+    );
+
+    pythonProcess.on(
+      "close",
+
+      (code) => {
+
+        if (code !== 0) {
+
+          console.error(
+            "Prediction Error:",
+            error
+          );
+
+          return res
+            .status(500)
+            .json({
+
+              error:
+                "Prediction failed"
+
+            });
+
+        }
+
+        res.json({
+
+          prediction:
+            result.trim()
+
         });
 
       }
 
-      return res.json({
-        prediction: result.trim(),
-      });
-
-    });
+    );
 
   }
 
   catch (err) {
 
-    console.error("Server Error:", err);
+    console.error(
+      "Server Error:",
+      err
+    );
 
     res.status(500).json({
-      error: "Internal server error"
+
+      error:
+        "Internal server error"
+
     });
 
   }
@@ -173,7 +275,7 @@ app.post("/predict", (req, res) => {
 });
 
 // ================================
-// 🌾 Fertilizer Recommendation Route
+// 🌾 Fertilizer Route
 // ================================
 
 app.post("/fertilizer", (req, res) => {
@@ -181,86 +283,114 @@ app.post("/fertilizer", (req, res) => {
   try {
 
     const {
+
       nitrogen,
       phosphorus,
       potassium
+
     } = req.body;
 
-    console.log(
-      "Fertilizer Input:",
-      nitrogen,
-      phosphorus,
-      potassium
-    );
+    const pythonPath =
+      path.join(
 
-    const pythonPath = path.join(
-      __dirname,
-      "ml",
-      "fertilizer_recommendation.py"
-    );
+        __dirname,
+        "ml",
+        "fertilizer_recommendation.py"
 
-    const pythonProcess = spawn("python", [
-      pythonPath,
-      nitrogen,
-      phosphorus,
-      potassium
-    ]);
+      );
+
+    const pythonProcess =
+      spawn(
+
+        "python",
+
+        [
+
+          pythonPath,
+
+          nitrogen,
+          phosphorus,
+          potassium
+
+        ]
+
+      );
 
     let result = "";
     let error = "";
 
-    pythonProcess.stdout.on("data", (data) => {
+    pythonProcess.stdout.on(
+      "data",
 
-      result += data.toString();
+      (data) => {
 
-    });
+        result +=
+          data.toString();
 
-    pythonProcess.stderr.on("data", (data) => {
+      }
 
-      error += data.toString();
+    );
 
-    });
+    pythonProcess.stderr.on(
+      "data",
 
-    pythonProcess.on("close", (code) => {
+      (data) => {
 
-      if (code !== 0) {
+        error +=
+          data.toString();
 
-        console.error("Python Error:", error);
+      }
 
-        return res.status(500).json({
-          error: "Fertilizer prediction failed",
-          details: error,
+    );
+
+    pythonProcess.on(
+      "close",
+
+      (code) => {
+
+        if (code !== 0) {
+
+          console.error(
+            "Fertilizer Error:",
+            error
+          );
+
+          return res
+            .status(500)
+            .json({
+
+              error:
+                "Fertilizer failed"
+
+            });
+
+        }
+
+        res.json({
+
+          recommendation:
+            result.trim()
+
         });
 
       }
 
-      try {
-
-        const parsedResult =
-          eval("(" + result + ")");
-
-        res.json(parsedResult);
-
-      }
-
-      catch (parseError) {
-
-        res.status(500).json({
-          error: "Failed to parse fertilizer result"
-        });
-
-      }
-
-    });
+    );
 
   }
 
   catch (err) {
 
-    console.error("Server Error:", err);
+    console.error(
+      "Server Error:",
+      err
+    );
 
     res.status(500).json({
-      error: "Internal server error"
+
+      error:
+        "Internal server error"
+
     });
 
   }
@@ -268,15 +398,67 @@ app.post("/fertilizer", (req, res) => {
 });
 
 // ================================
-// 🚀 Start Server
+// Server Start
 // ================================
 
 const PORT = 5000;
 
-app.listen(PORT, () => {
+app.listen(
 
-  console.log(
-    `🚀 Server running on http://localhost:${PORT}`
-  );
+  PORT,
 
-});
+  () => {
+
+    console.log(
+      `Server running on port ${PORT}`
+    );
+
+  }
+
+);
+
+// ================================
+// 🔥 AI Warm-Up (Speed Boost)
+// ================================
+
+setTimeout(async () => {
+
+  try {
+
+    await axios.post(
+
+      "http://localhost:11434/api/generate",
+
+      {
+
+        model: "mistral",
+
+        prompt: "Hello",
+
+        stream: false,
+
+        options: {
+
+          num_predict: 20
+
+        }
+
+      }
+
+    );
+
+    console.log(
+      "AI Warmed Up ✅"
+    );
+
+  }
+
+  catch (err) {
+
+    console.log(
+      "Warmup failed"
+    );
+
+  }
+
+}, 5000);

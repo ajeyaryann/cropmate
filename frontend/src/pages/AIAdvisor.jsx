@@ -6,98 +6,89 @@ import ChatBox from "../components/ChatBox";
 
 import "../styles/AIAdvisor.css";
 
-const AIAdvisor = () => {
+function AIAdvisor() {
 
   const navigate = useNavigate();
 
   return (
 
-    <div className="advisor-container">
+    <div className="ai-advisor-container">
 
-      {/* Header */}
+      {/* Back Button */}
 
-      <div className="header-section">
+      <button
+        className="back-button"
+        onClick={() =>
+          navigate("/")   // ✅ Correct route
+        }
+      >
 
-        <button
-          className="back-btn"
-          onClick={() => navigate("/")}
-        >
+        ⬅ Back to Dashboard
 
-          🔙 Back to Dashboard
+      </button>
 
-        </button>
+      {/* Voice + Chat Section */}
 
-        <h1 className="title">
+      <div className="voice-chat-wrapper">
 
-          🤖 CropMate AI Advisor
+        <VoiceAssistant />
 
-        </h1>
-
-        <p className="subtitle">
-
-          Ask farming questions using voice
-          or chat in multiple Indian languages.
-
-        </p>
+        <ChatBox />
 
       </div>
 
-      {/* Voice + Chat Grid */}
+      {/* Quick Farming Help */}
 
-      <div className="advisor-grid">
+      <div className="quick-help">
 
-        <div className="voice-card">
+        <h3>
+          🌱 Quick Farming Help
+        </h3>
 
-          <VoiceAssistant />
+        <div className="help-cards">
 
-        </div>
+          <div className="help-card">
 
-        <div className="chat-card">
+            🌿 Crop Advice
 
-          <ChatBox />
-
-        </div>
-
-      </div>
-
-      {/* Quick Tools */}
-
-      <div className="quick-tools">
-
-        <h3>🌾 Quick Farming Help</h3>
-
-        <div className="tool-grid">
-
-          <div className="tool-card">
-            🌱 Crop Advice
             <p>
               Ask about best crops,
               diseases and growth.
             </p>
+
           </div>
 
-          <div className="tool-card">
+          <div className="help-card">
+
             💧 Irrigation Tips
+
             <p>
               Get watering suggestions
               based on crop needs.
             </p>
+
           </div>
 
-          <div className="tool-card">
+          <div className="help-card">
+
             🧪 Fertilizer Help
+
             <p>
               Learn correct fertilizer
               usage and timing.
             </p>
+
           </div>
 
-          <div className="tool-card">
-            🌦️ Weather Questions
+          <div className="help-card">
+
+            🌤 Weather Questions
+
             <p>
-              Understand weather impact
-              on crop decisions.
+              Understand weather
+              impact on crop decisions.
             </p>
+
           </div>
 
         </div>
@@ -108,6 +99,6 @@ const AIAdvisor = () => {
 
   );
 
-};
+}
 
 export default AIAdvisor;

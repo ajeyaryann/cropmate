@@ -1,91 +1,117 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import "../styles/VoiceAssistant.css";
 
-const VoiceAssistant = () => {
+function VoiceAssistant() {
 
-  const [listening, setListening] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [response, setResponse] = useState("");
-  const [language, setLanguage] = useState("en-IN");
+  const [spokenText, setSpokenText] =
+    useState("");
 
-  const recognitionRef = useRef(null);
+  const [aiReply, setAiReply] =
+    useState("");
 
-  useEffect(() => {
+  const [listening, setListening] =
+    useState(false);
 
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+  const [speaking, setSpeaking] =
+    useState(false);
 
-    if (!SpeechRecognition) {
+  const [language, setLanguage] =
+    useState("en-IN");
 
-      alert("Speech Recognition not supported in this browser.");
+  let speech;
+
+  // ============================
+  // Start Listening
+  // ============================
+
+  const startListening = () => {
+
+    if (!("webkitSpeechRecognition" in window)) {
+
+      alert(
+        "Speech recognition not supported."
+      );
 
       return;
 
     }
 
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = false;
-
-    recognition.interimResults = false;
+    const recognition =
+      new window.webkitSpeechRecognition();
 
     recognition.lang = language;
 
-    recognition.onstart = () => {
+    recognition.start();
 
-      setListening(true);
+    setListening(true);
 
-    };
+    recognition.onresult =
+      async (event) => {
 
-    recognition.onend = () => {
+        const text =
+          event.results[0][0]
+            .transcript;
 
-      setListening(false);
+        setSpokenText(text);
 
-    };
+        setListening(false);
 
-    recognition.onresult = (event) => {
+        await sendToAI(text);
 
-      const speechText =
-        event.results[0][0].transcript;
+      };
 
-      setTranscript(speechText);
+  };
 
-      sendToBackend(speechText);
+  // ============================
+  // Send to AI
+  // ============================
 
-    };
-
-    recognitionRef.current = recognition;
-
-  }, [language]);
-
-  const sendToBackend = async (text) => {
-
-    setLoading(true);
+  const sendToAI = async (text) => {
 
     try {
 
-      const res = await fetch(
-        "http://localhost:5000/api/chat",
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          "http://localhost:5000/api/chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              message: text
+            })
+          }
+        );
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const data =
+        await response.json();
 
-          body: JSON.stringify({
-            message: text,
-          }),
-        }
-      );
+      setAiReply(data.reply);
 
-      const data = await res.json();
+      // Speak
 
-      setResponse(data.reply);
+      speech =
+        new SpeechSynthesisUtterance(
+          data.reply
+        );
 
-      speakResponse(data.reply);
+      speech.lang = language;
+
+      speech.onstart = () => {
+
+        setSpeaking(true);
+
+      };
+
+      speech.onend = () => {
+
+        setSpeaking(false);
+
+      };
+
+      speechSynthesis.speak(speech);
 
     }
 
@@ -93,111 +119,100 @@ const VoiceAssistant = () => {
 
       console.error(error);
 
-      setResponse("Server connection failed.");
-
     }
-
-    setLoading(false);
 
   };
 
-  const speakResponse = (text) => {
+  // ============================
+  // Stop Speaking
+  // ============================
 
-    const speech =
-      new SpeechSynthesisUtterance(text);
+  const stopSpeaking = () => {
 
-    speech.lang = language;
+    speechSynthesis.cancel();
 
-    window.speechSynthesis.speak(speech);
-
-  };
-
-  const startListening = () => {
-
-    if (recognitionRef.current) {
-
-      recognitionRef.current.start();
-
-    }
+    setSpeaking(false);
 
   };
 
   return (
 
-    <div className="voice-container">
+    <div className="voice-section">
 
-      <h2>🎤 Voice Assistant</h2>
-
-      {/* Language Switch */}
+      <h3>
+        🎤 Voice Assistant
+      </h3>
 
       <select
-        className="language-select"
         value={language}
         onChange={(e) =>
-          setLanguage(e.target.value)
+          setLanguage(
+            e.target.value
+          )
         }
       >
 
-        <option value="en-IN">
-          English
-        </option>
-
-        <option value="hi-IN">
-          Hindi
-        </option>
-
-        <option value="ta-IN">
-          Tamil
-        </option>
-
-        <option value="bn-IN">
-          Bengali
-        </option>
+        <option value="en-IN">English</option>
+        <option value="hi-IN">Hindi</option>
+        <option value="ta-IN">Tamil</option>
+        <option value="te-IN">Telugu</option>
+        <option value="bn-IN">Bengali</option>
 
       </select>
 
+      {/* Listening Button */}
+
       <button
+        className={
+          listening
+            ? "listening-btn"
+            : ""
+        }
         onClick={startListening}
-        className={`mic-button ${
-          listening ? "listening" : ""
-        }`}
       >
 
         {listening
-          ? "🎤 Listening..."
+          ? "Listening..."
           : "Start Speaking"}
 
       </button>
 
-      {loading && (
+      {/* Stop Speaking */}
 
-        <div className="thinking">
+      {speaking && (
 
-          AI thinking<span>.</span><span>.</span><span>.</span>
+        <button
+          className="stop-voice-btn"
+          onClick={stopSpeaking}
+        >
 
-        </div>
+          Stop Speaking
+
+        </button>
 
       )}
 
-      <div className="box">
+      {/* Voice Boxes */}
 
-        <h4>You Said:</h4>
+      <div className="voice-box">
 
-        <p>
-          {transcript ||
-            "Waiting for input..."}
-        </p>
+        <strong>You Said:</strong>
+
+        <p>{spokenText}</p>
 
       </div>
 
-      <div className="box">
+      <div
+        className={
+          speaking
+            ? "voice-box speaking"
+            : "voice-box"
+        }
+      >
 
-        <h4>AI Response:</h4>
+        <strong>AI Response:</strong>
 
-        <p>
-          {response ||
-            "AI will respond here..."}
-        </p>
+        <p>{aiReply}</p>
 
       </div>
 
@@ -205,6 +220,6 @@ const VoiceAssistant = () => {
 
   );
 
-};
+}
 
 export default VoiceAssistant;
